@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DocuMind · AI answers from your documents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0F16; --panel:#0F1620; --panel2:#131C28; --line:#1E2A3A; --line2:#273548;
+  --text:#E8ECF2; --muted:#8B97A9; --faint:#5D6A7E;
+  --acc:#F3A64A; --acc2:#FFCB84; --accbg:rgba(243,166,74,.12); --ok:#5BD6A0;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.6 Inter,system-ui,-apple-system,Segoe UI,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.app{display:grid;grid-template-columns:304px 1fr;height:100vh}
+/* ---------------------------------------------------------------- sidebar */
+aside{background:linear-gradient(180deg,#0E1520,#0B1119);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.brand{display:flex;align-items:center;gap:12px;padding:22px 22px 18px}
+.logo{width:36px;height:36px;border-radius:10px;background:conic-gradient(from 210deg,#F3A64A,#FF7A59,#F3A64A 60%,#FFD08A);display:grid;place-items:center;box-shadow:0 6px 20px rgba(243,166,74,.25)}
+.logo svg{width:20px;height:20px}
+.brand b{font-size:17px;letter-spacing:-.01em;display:block}
+.brand span{font-size:12px;color:var(--muted)}
+.kb-head{padding:10px 22px 8px;display:flex;justify-content:space-between;align-items:baseline}
+.kb-head h4{margin:0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.kb-head small{color:var(--faint);font-size:12px}
+.docs{flex:1;overflow:auto;padding:4px 14px 10px;min-height:0}
+.doc{display:flex;gap:12px;align-items:center;padding:11px 10px;border-radius:12px;position:relative;transition:background .15s}
+.doc:hover{background:var(--panel2)}
+.doc .ic{width:34px;height:40px;flex:none;border-radius:7px;background:linear-gradient(160deg,#1C2738,#141D2A);border:1px solid var(--line2);display:grid;place-items:center;font-size:9.5px;font-weight:700;color:var(--acc);letter-spacing:.04em}
+.doc .t{font-size:13.5px;font-weight:500;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}
+.doc .m{font-size:12px;color:var(--faint)}
+.doc .del{position:absolute;right:8px;top:50%;transform:translateY(-50%);opacity:0;color:var(--faint);padding:6px;border-radius:8px}
+.doc:hover .del{opacity:1}.doc .del:hover{color:#FF8A7A;background:rgba(255,120,100,.08)}
+.doc.new{animation:pop .5s ease}
+@keyframes pop{from{background:var(--accbg)}to{background:transparent}}
+.drop{margin:6px 16px 14px;border:1.5px dashed var(--line2);border-radius:var(--r);padding:16px;text-align:center;color:var(--muted);font-size:13px;transition:.15s;cursor:pointer}
+.drop b{color:var(--text);font-weight:600}
+.drop.over,.drop:hover{border-color:var(--acc);background:var(--accbg);color:var(--text)}
+.drop.busy{pointer-events:none;opacity:.7}
+.side-foot{border-top:1px solid var(--line);padding:14px 22px 18px;font-size:12px;color:var(--faint);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:4px 10px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);font-size:12px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.link{color:var(--muted);font-size:12px}.link:hover{color:var(--text)}
+/* ---------------------------------------------------------------- main */
+main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relative;background:radial-gradient(1200px 500px at 70% -10%,rgba(243,166,74,.07),transparent 60%)}
+.top{height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid var(--line)}
+.top h1{font-size:15px;margin:0;font-weight:600}.top h1 span{color:var(--muted);font-weight:400}
+.scroll{flex:1;overflow:auto;min-height:0;scroll-behavior:smooth}
+.col{max-width:820px;margin:0 auto;padding:32px 28px 24px}
+.empty{padding-top:7vh}
+.empty h2{font-size:34px;letter-spacing:-.025em;margin:0 0 10px;font-weight:700;background:linear-gradient(90deg,#fff,#C9D2DF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.empty p{color:var(--muted);margin:0 0 30px;font-size:16px;max-width:560px}
+.sugs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sug{text-align:left;padding:16px 18px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);transition:.15s;font-size:14px;line-height:1.45}
+.sug small{display:block;color:var(--faint);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;font-weight:600}
+.sug:hover{border-color:var(--line2);background:var(--panel2);transform:translateY(-1px)}
+.msg{margin:0 0 28px;animation:in .3s ease}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.msg.user{display:flex;justify-content:flex-end}
+.msg.user .b{background:var(--panel2);border:1px solid var(--line2);padding:12px 16px;border-radius:16px 16px 4px 16px;max-width:80%;white-space:pre-wrap}
+.msg.ai{display:grid;grid-template-columns:32px 1fr;gap:14px}
+.av{width:32px;height:32px;border-radius:9px;background:conic-gradient(from 210deg,#F3A64A,#FF7A59,#F3A64A 60%,#FFD08A);display:grid;place-items:center}
+.av svg{width:17px;height:17px}
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 10px}
+.step{font-size:12.5px;color:var(--muted);display:inline-flex;gap:7px;align-items:center;padding:4px 10px;border-radius:99px;background:var(--panel);border:1px solid var(--line)}
+.step.live::before{content:"";width:8px;height:8px;border-radius:50%;border:2px solid var(--acc);border-right-color:transparent;animation:spin .8s linear infinite}
+.step.ok::before{content:"✓";color:var(--ok);font-size:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ans{font-size:15.5px;line-height:1.7}
+.ans p{margin:0 0 12px}.ans ul,.ans ol{margin:0 0 12px;padding-left:22px}.ans li{margin:4px 0}
+.ans strong{color:#fff;font-weight:600}
+.caret{display:inline-block;width:8px;height:17px;background:var(--acc);vertical-align:-3px;margin-left:2px;border-radius:2px;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.cite{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 5px;margin:0 1px;border-radius:6px;background:var(--accbg);color:var(--acc2);font-size:11px;font-weight:700;vertical-align:2px;cursor:pointer;border:1px solid rgba(243,166,74,.28);transition:.12s}
+.cite:hover,.cite.on{background:var(--acc);color:#1a1205}
+.srcs{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.src{display:flex;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-size:12.5px;max-width:250px;text-align:left;transition:.15s}
+.src:hover,.src.on{border-color:var(--acc);background:var(--panel2)}
+.src .n{flex:none;width:20px;height:20px;border-radius:6px;background:var(--accbg);color:var(--acc2);font-weight:700;font-size:11px;display:grid;place-items:center}
+.src .x{overflow:hidden}.src .x b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.src .x span{color:var(--faint)}
+.meta{font-size:12px;color:var(--faint);margin-top:10px}
+.err{color:#FF9B8B}
+/* ---------------------------------------------------------------- composer */
+.composer{flex:none;padding:0 28px 22px}
+.box{max-width:820px;margin:0 auto;background:var(--panel);border:1px solid var(--line2);border-radius:18px;padding:12px 12px 12px 18px;display:flex;gap:10px;align-items:flex-end;box-shadow:0 10px 40px rgba(0,0,0,.35);transition:border-color .15s}
+.box:focus-within{border-color:rgba(243,166,74,.55)}
+textarea{flex:1;background:none;border:0;outline:0;color:var(--text);font:inherit;resize:none;max-height:180px;padding:7px 0;line-height:1.5}
+textarea::placeholder{color:var(--faint)}
+.send{width:40px;height:40px;border-radius:12px;background:var(--acc);display:grid;place-items:center;transition:.15s;flex:none}
+.send:disabled{background:var(--line2);cursor:default}
+.send svg{width:18px;height:18px}
+.hint{max-width:820px;margin:9px auto 0;text-align:center;font-size:12px;color:var(--faint)}
+/* ---------------------------------------------------------------- source panel */
+.panel{position:absolute;top:0;right:0;bottom:0;width:440px;background:#0D141E;border-left:1px solid var(--line2);transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;box-shadow:-20px 0 60px rgba(0,0,0,.4);z-index:5}
+.panel.open{transform:none}
+.ph{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start}
+.ph .n{flex:none;width:28px;height:28px;border-radius:8px;background:var(--acc);color:#1a1205;font-weight:700;display:grid;place-items:center;font-size:13px}
+.ph h3{margin:0;font-size:15px;font-weight:600;line-height:1.35}
+.ph p{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+.ph .close{margin-left:auto;color:var(--muted);padding:4px 8px;border-radius:8px;font-size:18px;line-height:1}.ph .close:hover{background:var(--panel2);color:var(--text)}
+.pb{padding:20px;overflow:auto;flex:1;font-size:14px;line-height:1.75;color:#D3DAE4;white-space:pre-wrap}
+.pb mark{background:rgba(243,166,74,.22);color:#fff;border-radius:3px;padding:0 2px}
+.pf{padding:14px 20px;border-top:1px solid var(--line)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:11px;background:var(--panel2);border:1px solid var(--line2);font-size:13px;font-weight:500;text-decoration:none;color:var(--text)}
+.btn:hover{border-color:var(--acc)}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);background:#1B2533;border:1px solid var(--line2);padding:10px 16px;border-radius:12px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
+.toast.show{opacity:1;transform:translateX(-50%)}
+::-webkit-scrollbar{width:10px}::-webkit-scrollbar-thumb{background:#1E2A3A;border-radius:10px;border:3px solid var(--bg)}
+@media(max-width:900px){.app{grid-template-columns:1fr}aside{display:none}.sugs{grid-template-columns:1fr}.panel{width:100%}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#1a1205" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M9 12h6M9 16h4"/></svg></div>
+      <div><b>DocuMind</b><span id="ws">Knowledge assistant</span></div>
+    </div>
+    <div class="kb-head"><h4>Knowledge base</h4><small id="kbstat"></small></div>
+    <div class="docs" id="docs"></div>
+    <label class="drop" id="drop"><input type="file" id="file" accept=".pdf,.txt,.md" hidden multiple>
+      <b>Add documents</b><br>Drop PDF, TXT or MD here, or click to browse</label>
+    <div class="side-foot"><span class="pill" id="model"><i class="dot"></i>connecting…</span><button class="link" id="reset">Reset demo</button></div>
+  </aside>
+  <main>
+    <div class="top"><h1 id="title">Ask your documents <span>· every answer cited</span></h1><span class="pill" id="search-mode">hybrid search</span></div>
+    <div class="scroll" id="scroll"><div class="col" id="col">
+      <div class="empty" id="empty">
+        <h2>What do you want to know?</h2>
+        <p>Ask in plain language. DocuMind reads the documents on the left and answers with links to the exact page it used.</p>
+        <div class="sugs">
+          <button class="sug"><small>HR policy</small>How many vacation days do I get, and can I carry unused days over?</button>
+          <button class="sug"><small>Troubleshooting</small>My battery shows error E08. What does it mean and what should I do?</button>
+          <button class="sug"><small>Returns</small>Can a customer return an SV-10 after it has been installed?</button>
+          <button class="sug"><small>Travel</small>What is the hotel limit for a business trip to London?</button>
+        </div>
+      </div>
+    </div></div>
+    <div class="composer">
+      <div class="box"><textarea id="q" rows="1" placeholder="Ask a question about your documents…"></textarea>
+        <button class="send" id="send" disabled aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="#1a1205" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+      <div class="hint">Answers come only from your documents. Click a number to see the exact passage.</div>
+    </div>
+    <div class="panel" id="panel">
+      <div class="ph"><div class="n" id="pn">1</div><div><h3 id="pt"></h3><p id="pm"></p></div><button class="close" id="pclose">×</button></div>
+      <div class="pb" id="pbody"></div>
+      <div class="pf"><a class="btn" id="popen" target="_blank" rel="noopener">Open the PDF at this page ↗</a></div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const $ = s => document.querySelector(s);
+const AV = '<div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#1a1205" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M9 12h6M9 16h4"/></svg></div>';
+let history = [], busy = false, docsCache = [];
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),2600)}
+
+async function status(){
+  try{const s=await (await fetch('/api/status')).json();
+    $('#ws').textContent=s.workspace; $('#model').innerHTML='<i class="dot"></i>'+esc(s.model==='none'?'no model key':s.model);
+    $('#search-mode').textContent=s.semantic_search?'hybrid search · semantic + keyword':'keyword search';
+  }catch(e){}
+}
+async function loadDocs(highlight){
+  docsCache=await (await fetch('/api/docs')).json();
+  const chunks=docsCache.reduce((a,d)=>a+d.chunks,0);
+  $('#kbstat').textContent=`${docsCache.length} docs · ${chunks} passages`;
+  $('#docs').innerHTML=docsCache.map(d=>`<div class="doc ${d.id===highlight?'new':''}"><div class="ic">${esc((d.file.split('.').pop()||'').toUpperCase())}</div>
+    <div><div class="t" title="${esc(d.title)}">${esc(d.title)}</div><div class="m">${d.pages} page${d.pages>1?'s':''} · ${d.chunks} passages</div></div>
+    <button class="del" data-id="${d.id}" title="Remove">✕</button></div>`).join('');
+}
+$('#docs').addEventListener('click',async e=>{const b=e.target.closest('.del');if(!b)return;
+  await fetch('/api/docs/'+b.dataset.id,{method:'DELETE'});loadDocs();status();toast('Document removed')});
+$('#reset').onclick=async()=>{await fetch('/api/reset',{method:'POST'});loadDocs();status();toast('Demo documents restored')};
+
+async function upload(files){
+  const drop=$('#drop'); drop.classList.add('busy');
+  for(const f of files){
+    drop.querySelector('b').textContent='Reading '+f.name+'…';
+    const fd=new FormData(); fd.append('file',f);
+    const r=await fetch('/api/docs',{method:'POST',body:fd});
+    if(r.ok){const d=await r.json();await loadDocs(d.id);toast(`Added "${d.title}" · ${d.chunks} passages`)}
+    else{const e=await r.json().catch(()=>({detail:'Upload failed'}));toast(e.detail||'Upload failed')}
+  }
+  drop.querySelector('b').textContent='Add documents'; drop.classList.remove('busy'); status();
+}
+$('#file').onchange=e=>upload([...e.target.files]);
+['dragenter','dragover'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').classList.add('over')}));
+['dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').classList.remove('over')}));
+$('#drop').addEventListener('drop',e=>upload([...e.dataTransfer.files]));
+
+// ---------------------------------------------------------------- rendering
+function md(text, n2){
+  const lines=esc(text).split('\n'); let html='',list=null;
+  const inline=s=>s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+     .replace(/\[(\d{1,2})\]/g,(m,n)=>n2[n]?`<span class="cite" data-n="${n}" title="${esc(n2[n].doc_title)}, p. ${n2[n].page}">${n}</span>`:'');
+  for(const raw of lines){
+    const l=raw.trim(); const ul=l.match(/^[-*•]\s+(.*)/), ol=l.match(/^\d+[.)]\s+(.*)/);
+    if(ul||ol){const tag=ul?'ul':'ol'; if(list!==tag){if(list)html+=`</${list}>`;html+=`<${tag}>`;list=tag} html+=`<li>${inline((ul||ol)[1])}</li>`; continue}
+    if(list){html+=`</${list}>`;list=null}
+    if(l) html+=`<p>${inline(l)}</p>`;
+  }
+  if(list) html+=`</${list}>`;
+  return html;
+}
+function scrollDown(){const s=$('#scroll');s.scrollTop=s.scrollHeight}
+function openSource(src,query){
+  $('#pn').textContent=src.n; $('#pt').textContent=src.doc_title; $('#pm').textContent=`Page ${src.page}${src.section?' · '+src.section:''}`;
+  const STOP=new Set('what does mean meaning should about there which would could with this that from have your when where many much they them their will into than then also some does doing done want need tell know'.split(' '));
+  const words=[...new Set((query||'').toLowerCase().match(/[a-z0-9]{4,}/g)||[])].filter(w=>!STOP.has(w));
+  let body=esc(src.text); words.forEach(w=>{body=body.replace(new RegExp('\\b('+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\w*)','gi'),'<mark>$1</mark>')});
+  $('#pbody').innerHTML=body; $('#popen').href=`/files/${src.file}#page=${src.page}`; $('#panel').classList.add('open');
+  document.querySelectorAll('.cite,.src').forEach(e=>e.classList.toggle('on',e.dataset.n==src.n&&e.closest('.msg')===openSource.msg));
+}
+$('#pclose').onclick=()=>$('#panel').classList.remove('open');
+
+async function ask(q){
+  if(busy||!q.trim())return; busy=true; $('#send').disabled=true; $('#empty')?.remove();
+  const col=$('#col');
+  col.insertAdjacentHTML('beforeend',`<div class="msg user"><div class="b">${esc(q)}</div></div>`);
+  const m=document.createElement('div'); m.className='msg ai';
+  m.innerHTML=AV+`<div><div class="steps"><span class="step live">Searching ${docsCache.length} documents</span></div><div class="ans"><span class="caret"></span></div><div class="srcs"></div><div class="meta"></div></div>`;
+  col.appendChild(m); scrollDown();
+  const steps=m.querySelector('.steps'), ans=m.querySelector('.ans'), srcEl=m.querySelector('.srcs'), meta=m.querySelector('.meta');
+  let text='', sources=[], byN={}, query=q;
+  try{
+    const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,history})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.detail||'Request failed')}
+    const rd=r.body.getReader(), dec=new TextDecoder(); let buf='';
+    while(true){const {value,done}=await rd.read(); if(done)break; buf+=dec.decode(value,{stream:true});
+      let i; while((i=buf.indexOf('\n\n'))>=0){const blk=buf.slice(0,i); buf=buf.slice(i+2);
+        const ev=(blk.match(/^event: (.*)$/m)||[])[1], data=JSON.parse((blk.match(/^data: (.*)$/m)||[])[1]||'{}');
+        if(ev==='sources'){sources=data.sources; query=data.query; sources.forEach(s=>byN[s.n]=s);
+          steps.innerHTML=`<span class="step ok">Searched ${docsCache.length} documents</span><span class="step live">Found ${sources.length} relevant passages · writing answer</span>`}
+        else if(ev==='token'){text+=data.t; ans.innerHTML=md(text,byN)+'<span class="caret"></span>'; scrollDown()}
+        else if(ev==='error'){ans.innerHTML=md(text,byN)+`<p class="err">${esc(data.message)}</p>`}
+        else if(ev==='done'){
+          const used=[...new Set((text.match(/\[(\d{1,2})\]/g)||[]).map(x=>+x.slice(1,-1)))].filter(n=>byN[n]);
+          steps.innerHTML=`<span class="step ok">Searched ${docsCache.length} documents</span><span class="step ok">${used.length} source${used.length===1?'':'s'} cited</span>`;
+          ans.innerHTML=md(text,byN);
+          srcEl.innerHTML=used.map(n=>{const s=byN[n];return `<button class="src" data-n="${n}"><span class="n">${n}</span><span class="x"><b>${esc(s.doc_title)}</b><span>Page ${s.page}${s.section?' · '+esc(s.section.replace(/^\d+\.\s*/,'')):''}</span></span></button>`}).join('');
+          meta.textContent=data.ms?`Answered in ${(data.ms/1000).toFixed(1)} s`:'';
+        }
+      }
+    }
+  }catch(e){ans.innerHTML=`<p class="err">${esc(e.message)}</p>`; steps.innerHTML=''}
+  m.addEventListener('click',e=>{const c=e.target.closest('.cite,.src'); if(c&&byN[c.dataset.n]){openSource.msg=m; openSource(byN[c.dataset.n],query)}});
+  history.push({role:'user',content:q},{role:'assistant',content:text.replace(/\[\d{1,2}\]/g,'')});
+  busy=false; $('#send').disabled=!$('#q').value.trim(); scrollDown();
+}
+const qa=$('#q');
+qa.addEventListener('input',()=>{qa.style.height='auto';qa.style.height=Math.min(qa.scrollHeight,180)+'px';$('#send').disabled=busy||!qa.value.trim()});
+qa.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
+function send(){const q=qa.value;qa.value='';qa.style.height='auto';$('#send').disabled=true;ask(q)}
+$('#send').onclick=send;
+document.querySelectorAll('.sug').forEach(b=>b.onclick=()=>ask(b.lastChild.textContent.trim()));
+status(); loadDocs();
+</script>
+</body>
+</html>
